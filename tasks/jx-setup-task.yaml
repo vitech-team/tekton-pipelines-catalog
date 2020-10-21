@@ -134,17 +134,6 @@ spec:
         - --baseBranch
         - $(params.PULL_BASE_REF)
 
-    - name: jx-variables
-      image: gcr.io/jenkinsxio/jx-cli:latest
-      workingDir: $(workspaces.source.path)
-      script: |
-        jx gitops variables
-        git commit --amend -m "chore(ci): added variables"
-      volumeMounts:
-        - mountPath: /etc/podinfo
-          name: podinfo
-          readOnly: true
-
     - name: next-version
       image: gcr.io/jenkinsxio-labs-private/jxl:0.0.136
       workingDir: $(workspaces.source.path)
@@ -165,11 +154,22 @@ spec:
             echo "Skipping version update [tag]"
         fi
 
+    - name: jx-variables
+      image: gcr.io/jenkinsxio/jx-cli:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        jx gitops variables
+        git commit --amend -m "chore(ci): added variables"
+      volumeMounts:
+        - mountPath: /etc/podinfo
+          name: podinfo
+          readOnly: true
+
     - name: jx-variables-results
       image: gcr.io/jenkinsxio/jx-cli:latest
       script: |
         #!/usr/bin/env bash
-        source /workspace/source/.jx/variables.sh
+        source $(workspaces.source.path)/.jx/variables.sh
         export OUTPUT_IMAGE=$DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION
 
         echo -n "$OUTPUT_IMAGE" > $(results.image.path)
