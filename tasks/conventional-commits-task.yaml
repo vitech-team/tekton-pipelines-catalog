@@ -75,6 +75,4 @@ spec:
 
         if [[ "$(params.FAIL)" == "true" && "$(cat $(results.passed.path))" == "false" ]]; then
             exit 1
-          else
-            echo "Skipping failure step due to configured parameter: FAIL set to $(params.FAIL)"
         fi

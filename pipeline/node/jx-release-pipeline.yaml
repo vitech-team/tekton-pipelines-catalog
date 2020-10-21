@@ -122,9 +122,9 @@ spec:
 
     - name: container-build
       taskRef:
-        name: buildpacks
+        name: jx-kaniko
       runAfter:
-        - "jx-setup"
+        - "build"
       params:
         - name: BUILDER_IMAGE
           value: paketobuildpacks/builder:base
