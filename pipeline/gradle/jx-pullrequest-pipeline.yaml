@@ -131,6 +131,8 @@ spec:
       params:
         - name: PR_NUMBER
           value: $(params.PULL_NUMBER)
+        - name: FAIL
+          value: "false"
 
     - name: container-build
       taskRef:

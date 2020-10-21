@@ -26,7 +26,7 @@ spec:
     - name: FAIL
       type: string
       description: Pull Request Number to left comment
-      default: "no"
+      default: "false"
   results:
     - name: report
       description: report of commits
@@ -41,9 +41,9 @@ spec:
       workingDir: $(workspaces.source.path)
       script: |
         if commitsar > $(results.report.path); then
-          echo -n "yes" > $(results.passed.path)
+          echo -n "true" > $(results.passed.path)
         else
-          echo -n "no" > $(results.passed.path)
+          echo -n "false" > $(results.passed.path)
         fi
         cat $(results.report.path)
 
@@ -62,7 +62,9 @@ spec:
         if [ -z "$(params.PR_NUMBER)" ]; then
             echo "No PR_NUMBER parameter provider, skipping commet."
           else
-            jx gitops pr comment --pr="$(params.PR_NUMBER)" --comment="$(cat $(results.mardown_report.path))"
+            if ! "$(cat $(results.passed.path))" ; then
+              jx gitops pr comment --pr="$(params.PR_NUMBER)" --comment="$(cat $(results.mardown_report.path))"
+            fi
         fi
 
     - name: conventional-commits-final
@@ -71,6 +73,8 @@ spec:
       script: |
         #!/bin/bash
 
-        if [[ "$(params.FAIL)" == "yes" && "$(cat $(results.passed.path))" == "no" ]]; then
+        if [[ "$(params.FAIL)" == "true" && "$(cat $(results.passed.path))" == "false" ]]; then
             exit 1
+          else
+            echo "Skipping failure step due to configured parameter: FAIL set to $(params.FAIL)"
         fi

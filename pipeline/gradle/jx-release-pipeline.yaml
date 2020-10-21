@@ -51,11 +51,6 @@ spec:
       name: REPO_URL
       type: string
 
-    - name: SNYK_IMAGE
-      type: string
-      description: snyk image to scan dependencies
-
-
   workspaces:
     - name: shared-data
       description: |

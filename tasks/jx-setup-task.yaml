@@ -112,11 +112,10 @@ spec:
         echo checked out revision: $(params.PULL_PULL_SHA) to dir: $(workspaces.source.path)
 
     - name: git-setup
+      image: gcr.io/jenkinsxio/jx-cli:latest
       workingDir: $(workspaces.source.path)
-      command:
-        - jx
-      args:
-        - git setup --namespace jx-git-operator
+      script: |
+        jx gitops git setup --namespace jx-git-operator
 
     - name: git-merge
       image: gcr.io/jenkinsxio/builder-jx:2.1.142-761
@@ -138,11 +137,9 @@ spec:
     - name: jx-variables
       image: gcr.io/jenkinsxio/jx-cli:latest
       workingDir: $(workspaces.source.path)
-      command:
-        - jx
-      args:
-        - gitops
-        - variables
+      script: |
+        jx gitops variables
+        git commit --amend -m "chore(ci): added variables"
       volumeMounts:
         - mountPath: /etc/podinfo
           name: podinfo
@@ -150,6 +147,7 @@ spec:
 
     - name: next-version
       image: gcr.io/jenkinsxio-labs-private/jxl:0.0.136
+      workingDir: $(workspaces.source.path)
       script: |
         if $(params.IS_RELEASE); then
             jx step next-version --use-git-tag-only
@@ -157,16 +155,15 @@ spec:
             echo "Skipping version update [file]"
         fi
 
-
     - name: tag-version
       image: gcr.io/jenkinsxio-labs-private/jxl:0.0.136
+      workingDir: $(workspaces.source.path)
       script: |
         if $(params.IS_RELEASE); then
             jx step tag --version $(cat VERSION)
           else
             echo "Skipping version update [tag]"
         fi
-
 
     - name: jx-variables-results
       image: gcr.io/jenkinsxio/jx-cli:latest
@@ -178,13 +175,14 @@ spec:
         echo -n "$OUTPUT_IMAGE" > $(results.image.path)
 
     - name: get-pr-info
-      image: 'gcr.io/jenkinsxio/jx-cli:latest'
+      image: gcr.io/jenkinsxio/jx-cli:latest
       workingDir: $(workspaces.source.path)
       script: |
         #!/usr/bin/env bash
         if [[ -n "${PULL_NUMBER}" ]]; then
           jx gitops pr get --git-token="$GIT_TOKEN" --pr="${PULL_NUMBER}" &> pr.yaml
         fi
+
     - name: save-source-branch
       workingDir: $(workspaces.source.path)
       image: mikefarah/yq

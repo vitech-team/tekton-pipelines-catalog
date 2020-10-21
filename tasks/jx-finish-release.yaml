@@ -90,6 +90,7 @@ spec:
 
     - name: promote-changelog
       image: gcr.io/jenkinsxio/builder-go:2.1.142-761
+      workingDir: $(workspaces.source.path)
       command:
         - /bin/bash
         - -c
@@ -98,6 +99,7 @@ spec:
 
     - name: promote-helm-release
       image: gcr.io/jenkinsxio/jx-cli:latest
+      workingDir: $(workspaces.source.path)
       args:
         - jx gitops helm release
       command:
@@ -106,6 +108,7 @@ spec:
 
     - name: promote-jx-promote
       image: gcr.io/jenkinsxio/jx-cli:latest
+      workingDir: $(workspaces.source.path)
       command:
         - /bin/bash
         - -c
