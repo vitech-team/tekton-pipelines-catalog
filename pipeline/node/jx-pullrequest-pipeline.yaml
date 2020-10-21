@@ -136,12 +136,10 @@ spec:
 
     - name: container-build
       taskRef:
-        name: buildpacks
+        name: jx-kaniko
       runAfter:
         - "jx-setup"
       params:
-        - name: BUILDER_IMAGE
-          value: paketobuildpacks/builder:base
         - name: IMAGE
           value: $(tasks.jx-setup.results.image)
       workspaces:

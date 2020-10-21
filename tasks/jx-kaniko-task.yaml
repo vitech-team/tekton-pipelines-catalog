@@ -1,0 +1,51 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: jx-kaniko
+  labels:
+    app.kubernetes.io/version: "0.2"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: "docker"
+    tekton.dev/displayName: "kaniko-build"
+spec:
+  description: >-
+    Build docker image
+  workspaces:
+    - name: source
+      description: sources dir
+  params:
+    - name: IMAGE
+      type: string
+      description: image what need to be published
+
+    - name: DOCKERFILE
+      type: string
+      description: image what need to be published
+      default: "Dockerfile"
+
+    - name: CACHE_REPO
+      type: string
+      default: "$(params.IMAGE)/cache"
+      description: KANIKO_FLAGS
+    - name: KANIKO_FLAGS
+      type: string
+      default: ""
+      description: KANIKO_FLAGS
+  steps:
+    - name: build-container
+      image: gcr.io/kaniko-project/executor:debug-v0.24.0
+      workingDir: $(workspaces.source.path)
+      script: |
+        /kaniko/executor $KANIKO_FLAGS  \
+          --cache=true --cache-dir=/cache \
+          --context=$(workspaces.source.path) --dockerfile=$(params.DOCKERFILE) \
+          --destination=$(params.IMAGE) \
+          --cache-repo=$(params.CACHE_REPO)
+      volumeMounts:
+        - name: cache-dir
+          mountPath: /cache
+
+  volumes:
+    - name: cache-dir
+      emptyDir: { }
