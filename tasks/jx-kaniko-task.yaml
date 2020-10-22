@@ -26,7 +26,7 @@ spec:
 
     - name: CACHE_REPO
       type: string
-      default: "$(params.IMAGE)/cache"
+      default: ""
       description: KANIKO_FLAGS
     - name: KANIKO_FLAGS
       type: string
@@ -36,12 +36,15 @@ spec:
     - name: build-container
       image: gcr.io/kaniko-project/executor:debug-v0.24.0
       workingDir: $(workspaces.source.path)
-      script: |
-        /kaniko/executor $KANIKO_FLAGS  \
-          --cache=true --cache-dir=/cache \
-          --context=$(workspaces.source.path) --dockerfile=$(params.DOCKERFILE) \
-          --destination=$(params.IMAGE) \
-          --cache-repo=$(params.CACHE_REPO)
+      command:
+        - /kaniko/executor
+        - $(params.KANIKO_FLAGS)
+        - --cache=true
+        - --cache-dir=/cache
+        - --context=$(workspaces.source.path)
+        - --dockerfile=$(params.DOCKERFILE)
+        - --destination=$(params.IMAGE)
+        - --cache-repo=$(params.CACHE_REPO)/cache
       volumeMounts:
         - name: cache-dir
           mountPath: /cache
