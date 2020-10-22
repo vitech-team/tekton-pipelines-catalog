@@ -6,11 +6,15 @@ metadata:
     app.kubernetes.io/version: "0.2"
   annotations:
     tekton.dev/pipelines.minVersion: "0.12.1"
-    tekton.dev/tags: "gradle"
-    tekton.dev/displayName: "gradle"
+    tekton.dev/tags: "jx"
+    tekton.dev/displayName: "jx-setup"
 spec:
   description: >-
-    build
+    Configure git environment.
+    Perform it merge of latest changes
+    if IS_RELEASE is true: generate new version
+    generate as result next docker image name
+    extract source branch name based on PR number
   workspaces:
     - name: source
       description: sources dir
@@ -138,7 +142,7 @@ spec:
         - $(params.PULL_BASE_REF)
 
     - name: next-version
-      image: gcr.io/jenkinsxio-labs-private/jxl:0.0.136
+      image: gcr.io/jenkinsxio/builder-go
       workingDir: $(workspaces.source.path)
       script: |
         if $(params.IS_RELEASE); then
@@ -148,7 +152,7 @@ spec:
         fi
 
     - name: tag-version
-      image: gcr.io/jenkinsxio-labs-private/jxl:0.0.136
+      image: gcr.io/jenkinsxio/builder-go
       workingDir: $(workspaces.source.path)
       script: |
         if $(params.IS_RELEASE); then

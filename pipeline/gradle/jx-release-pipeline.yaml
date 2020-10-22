@@ -51,6 +51,11 @@ spec:
       name: REPO_URL
       type: string
 
+    - name: NEXT_VERSION_ARGS
+      type: string
+      description: release args
+      default: "--semantic-release"
+
   workspaces:
     - name: shared-data
       description: |
