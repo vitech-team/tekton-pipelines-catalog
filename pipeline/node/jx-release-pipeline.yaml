@@ -51,6 +51,13 @@ spec:
       name: REPO_URL
       type: string
 
+    - name: NEXT_VERSION_ARGS
+      type: string
+      description: release args
+      default:
+        - "--semantic-release"
+        - "--filename package.json"
+
   workspaces:
     - name: shared-data
       description: |
@@ -110,6 +117,8 @@ spec:
           value: $(params.REPO_URL)
         - name: IS_RELEASE
           value: "true"
+        - name: NEXT_VERSION_ARGS
+          value: $(params.NEXT_VERSION_ARGS)
 
     - name: build
       taskRef:

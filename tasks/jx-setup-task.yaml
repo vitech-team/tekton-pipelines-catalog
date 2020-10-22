@@ -61,6 +61,10 @@ spec:
     - name: IS_RELEASE
       type: string
       default: "false"
+    - name: NEXT_VERSION_ARGS
+      type: array
+      default:
+        - "--semantic-release --use-git-tag-only"
   results:
     - name: image
       description: Name of the image which should be builded
@@ -137,9 +141,11 @@ spec:
     - name: next-version
       image: gcr.io/jenkinsxio-labs-private/jxl:0.0.136
       workingDir: $(workspaces.source.path)
+      args:
+        - "$(params.NEXT_VERSION_ARGS[*])"
       script: |
         if $(params.IS_RELEASE); then
-            jx step next-version --use-git-tag-only
+            jx step next-version ${1}
           else
             echo "Skipping version update [file]"
         fi

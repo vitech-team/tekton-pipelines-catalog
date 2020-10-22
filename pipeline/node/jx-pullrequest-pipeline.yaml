@@ -136,7 +136,7 @@ spec:
 
     - name: container-build
       taskRef:
-        name: jx-kaniko
+        name: kaniko
       runAfter:
         - "build"
       params:

@@ -73,6 +73,8 @@ spec:
       script: |
         #!/bin/bash
 
-        if [[ "$(params.FAIL)" == "true" && "$(cat $(results.passed.path))" == "false" ]]; then
+        if "$(params.FAIL)" ; then
+          if ! "$(cat $(results.passed.path))" ; then
             exit 1
+          fi
         fi
