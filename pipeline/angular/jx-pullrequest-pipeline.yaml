@@ -1,10 +1,10 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: jx-node-release
+  name: jx-angular-pullrequest
 spec:
   description: |
-    Release
+    description
   params:
     - description: the unique build number
       name: BUILD_ID
@@ -51,11 +51,6 @@ spec:
       name: REPO_URL
       type: string
 
-    - name: NEXT_VERSION_ARGS
-      type: string
-      description: release args
-      default: "--semantic-release --filename package.json"
-
   workspaces:
     - name: shared-data
       description: |
@@ -101,6 +96,8 @@ spec:
           value: $(params.PULL_BASE_REF)
         - name: PULL_BASE_SHA
           value: $(params.PULL_BASE_SHA)
+        - name: PULL_NUMBER
+          value: $(params.PULL_NUMBER)
         - name: PULL_PULL_REF
           value: $(params.PULL_PULL_REF)
         - name: PULL_PULL_SHA
@@ -113,10 +110,6 @@ spec:
           value: $(params.REPO_OWNER)
         - name: REPO_URL
           value: $(params.REPO_URL)
-        - name: IS_RELEASE
-          value: "true"
-        - name: NEXT_VERSION_ARGS
-          value: $(params.NEXT_VERSION_ARGS)
 
     - name: build
       taskRef:
@@ -126,6 +119,20 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
+
+    - name: conventionalcommits
+      taskRef:
+        name: conventional-commits
+      runAfter:
+        - "jx-setup"
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: PR_NUMBER
+          value: $(params.PULL_NUMBER)
+        - name: FAIL
+          value: "false"
 
     - name: container-build
       taskRef:
@@ -149,18 +156,81 @@ spec:
           value: "$(params.REPO_OWNER):$(params.REPO_NAME)"
         - name: SONAR_PROJECT_NAME
           value: "$(params.REPO_NAME)"
+        - name: SONAR_PR_BRANCH
+          value: "$(tasks.jx-setup.results.source_branch)"
+        - name: SONAR_PR_BASE
+          value: "$(params.PULL_BASE_REF)"
+        - name: SONAR_PR_KEY
+          value: "$(params.PULL_NUMBER)"
         - name: SONAR_SECRET
           value: "sonar"
       workspaces:
         - name: source
           workspace: shared-data
 
-    - name: jx-finish-release
+    - name: snyk-container-check
       taskRef:
-        name: jx-finish-release
+        name: snyk
+      runAfter:
+        - "container-build"
+      params:
+        - name: SNYK_IMAGE
+          value: "snyk/snyk:docker"
+        - name: SNYK_COMMAND
+          value: "container"
+        - name: IMAGE
+          value: $(tasks.jx-setup.results.image)
+        - name: MONITOR_ARGS
+          value:
+            - "--project-name=$(params.REPO_OWNER)/$(params.REPO_NAME)/$(tasks.jx-setup.results.source_branch)"
+        - name: TEST_ARGS
+          value:
+            - "--severity-threshold=medium"
+        - name: SNYK_SECRET
+          value: snyk
+        - name: PR_ID
+          value: "$(params.PULL_NUMBER)"
+        - name: FAIL
+          value: "false"
+
+      workspaces:
+        - name: source
+          workspace: shared-data
+
+    - name: snyk-dependency-check
+      taskRef:
+        name: snyk
+      runAfter:
+        - "build"
+      params:
+        - name: SNYK_IMAGE
+          value: "snyk/snyk:gradle-jdk11"
+        - name: SNYK_COMMAND
+          value: ""
+        - name: MONITOR_ARGS
+          value:
+            - "--remote-repo-url=$(params.REPO_URL)"
+            - "--project-name=$(params.REPO_OWNER)/$(params.REPO_NAME)/$(tasks.jx-setup.results.source_branch)"
+        - name: TEST_ARGS
+          value:
+            - "--severity-threshold=medium"
+        - name: SNYK_SECRET
+          value: snyk
+        - name: PR_ID
+          value: "$(params.PULL_NUMBER)"
+        - name: FAIL
+          value: "false"
+      workspaces:
+        - name: source
+          workspace: shared-data
+
+    - name: jx-finish
+      taskRef:
+        name: jx-finish-pr
       runAfter:
         - "container-build"
         - "sonar-check"
+        - "snyk-container-check"
       params:
         - name: BUILD_ID
           value: $(params.BUILD_ID)
@@ -174,6 +244,8 @@ spec:
           value: $(params.PULL_BASE_REF)
         - name: PULL_BASE_SHA
           value: $(params.PULL_BASE_SHA)
+        - name: PULL_NUMBER
+          value: $(params.PULL_NUMBER)
         - name: PULL_PULL_REF
           value: $(params.PULL_PULL_REF)
         - name: PULL_PULL_SHA
