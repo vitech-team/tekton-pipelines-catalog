@@ -2,6 +2,9 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: jx-gradle-release
+  labels:
+    jenkins.io/pipelineType: build
+    owner: vitech-team
 spec:
   description: |
     Release
