@@ -118,7 +118,7 @@ spec:
     - name: sonar-scan
       image: sonarsource/sonar-scanner-cli
       workingDir: $(workspaces.source.path)
-      sciptr: |
+      script: |
         sonar-scanner -Dsonar.login=${SONAR_TOKEN} | grep "ANALYSIS " | grep -Eo '(http|https).+' > $(results.url.path)
         rm -rf .scannerwork
       env:
