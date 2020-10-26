@@ -143,28 +143,6 @@ spec:
         - name: source
           workspace: shared-data
 
-    - name: sonar-check
-      taskRef:
-        name: sonarqube-scanner
-      runAfter:
-        - "container-build"
-      params:
-        - name: SONAR_PROJECT_KEY
-          value: "$(params.REPO_OWNER):$(params.REPO_NAME)"
-        - name: SONAR_PROJECT_NAME
-          value: "$(params.REPO_NAME)"
-        - name: SONAR_PR_BRANCH
-          value: "$(tasks.jx-setup.results.source_branch)"
-        - name: SONAR_PR_BASE
-          value: "$(params.PULL_BASE_REF)"
-        - name: SONAR_PR_KEY
-          value: "$(params.PULL_NUMBER)"
-        - name: SONAR_SECRET
-          value: "sonar"
-      workspaces:
-        - name: source
-          workspace: shared-data
-
     - name: snyk-container-check
       taskRef:
         name: snyk

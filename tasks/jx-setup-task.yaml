@@ -68,6 +68,9 @@ spec:
     - name: NEXT_VERSION_ARGS
       type: string
       default: "--semantic-release --use-git-tag-only"
+    - name: GIT_CHECKOUT_STRATEGY
+      type: string
+      default: "jx"
   results:
     - name: image
       description: Name of the image which should be builded
@@ -124,22 +127,40 @@ spec:
       script: |
         jx gitops git setup --namespace jx-git-operator
 
+    - name: get-pr-info
+      image: gcr.io/jenkinsxio/jx-cli:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        if [[ -n "${PULL_NUMBER}" ]]; then
+          jx gitops pr get --git-token="$GIT_TOKEN" --pr="${PULL_NUMBER}" &> pr.yaml
+        fi
+      env:
+        - name: GIT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: jx-pipeline-git-github-github
+              key: password
+
+    - name: save-source-branch
+      workingDir: $(workspaces.source.path)
+      image: mikefarah/yq
+      script: |
+        if [[ -n "${PULL_NUMBER}" ]]; then
+          yq r pr.yaml Source > $(results.source_branch.path)
+          rm pr.yaml
+          echo "Soure branch is: $(cat $(results.source_branch.path))"
+        fi
+
     - name: git-merge
       image: gcr.io/jenkinsxio/builder-jx:2.1.142-761
       workingDir: $(workspaces.source.path)
-      command:
-        - jx
-      args:
-        - step
-        - git
-        - merge
-        - --verbose
-        - --baseSHA
-        - $(params.PULL_BASE_SHA)
-        - --sha
-        - $(params.PULL_PULL_SHA)
-        - --baseBranch
-        - $(params.PULL_BASE_REF)
+      script: |
+        if [[ "$(params.GIT_CHECKOUT_STRATEGY)" == "jx" ]]; then
+          jx step git merge --verbose --baseSHA $(params.PULL_BASE_SHA) --sha $(params.PULL_PULL_SHA) --baseBranch $(params.PULL_BASE_REF)
+        else
+          git checkout $(cat $(results.source_branch.path))
+        fi
 
     - name: next-version
       image: gcr.io/jenkinsxio/builder-go
@@ -180,22 +201,3 @@ spec:
         export OUTPUT_IMAGE=$DOCKER_REGISTRY/$DOCKER_REGISTRY_ORG/$APP_NAME:$VERSION
 
         echo -n "$OUTPUT_IMAGE" > $(results.image.path)
-
-    - name: get-pr-info
-      image: gcr.io/jenkinsxio/jx-cli:latest
-      workingDir: $(workspaces.source.path)
-      script: |
-        #!/usr/bin/env bash
-        if [[ -n "${PULL_NUMBER}" ]]; then
-          jx gitops pr get --git-token="$GIT_TOKEN" --pr="${PULL_NUMBER}" &> pr.yaml
-        fi
-
-    - name: save-source-branch
-      workingDir: $(workspaces.source.path)
-      image: mikefarah/yq
-      script: |
-        if [[ -n "${PULL_NUMBER}" ]]; then
-          yq r pr.yaml Source > $(results.source_branch.path)
-          rm pr.yaml
-          echo "Soure branch is: $(cat $(results.source_branch.path))"
-        fi
