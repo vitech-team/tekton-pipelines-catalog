@@ -110,7 +110,7 @@ spec:
       taskRef:
         name: gradle-build
       runAfter:
-        - "fetch-repo"
+        - "jx-setup"
       workspaces:
         - name: source
           workspace: shared-data
@@ -119,7 +119,7 @@ spec:
       taskRef:
         name: sonarqube-scanner
       runAfter:
-        - "container-build"
+        - "build"
       params:
         - name: SONAR_PROJECT_KEY
           value: "$(params.REPO_OWNER):$(params.REPO_NAME)"
