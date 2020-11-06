@@ -74,6 +74,12 @@ readinessProbe:
   successThreshold: 1
   timeoutSeconds: 1
 
+actuator:
+  enabled: true
+  port: 8081
+  name: metrics
+  probePathLiveness: /health/liveness
+  probePathReadiness: /health/readiness
 
 # custom ingress annotations on this service
 ingress:
