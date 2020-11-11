@@ -1,0 +1,177 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  annotations:
+    lighthouse.jenkins-x.io/prependStepsURL: https://raw.githubusercontent.com/jenkins-x/jx3-pipeline-catalog/005e78cf69b643862344397a635736a51dd1bd89/tasks/git-clone/git-clone.yaml
+  creationTimestamp: null
+  name: release
+spec:
+  pipelineSpec:
+    params:
+    - default: master
+      description: git revision to checkout (branch, tag, sha, ref…)
+      name: revision
+      type: string
+    tasks:
+    - name: from-build-pack
+      params:
+      - name: revision
+        value: $(params.revision)
+      resources: {}
+      taskSpec:
+        metadata: {}
+        params:
+        - default: master
+          description: git revision to checkout (branch, tag, sha, ref…)
+          name: revision
+          type: string
+        stepTemplate:
+          env:
+          - name: PIPELINE_KIND
+            value: release
+          - name: JX_BATCH_MODE
+            value: "true"
+          - name: VERSION
+            value: $(inputs.params.version)
+          name: ""
+          volumeMounts:
+          - mountPath: /home/jenkins
+            name: workspace-volume
+          - mountPath: /etc/podinfo
+            name: podinfo
+            readOnly: true
+          - mountPath: /large-test-reports
+            name: large-test-reports
+          workingDir: /workspace/source
+        steps:
+        - name: prepare-promotion-check
+          image: gcr.io/jenkinsxio/builder-jx:2.1.142-761
+          script: |
+            jx get applications -p -u > .deployed_apps
+            git rev-parse master > .git_sha
+            cat .deployed_apps
+
+        - name: check-promotion
+          image: python:latest
+          script: |
+            pip install pyyaml
+            python -m script.large_test_utils
+            python -c 'from script.large_test_utils import check_promotion; check_promotion()'
+            echo Large test will be executed for next environments:
+            cat .env_to_test
+
+        - args:
+          - pr
+          command:
+          - make
+          image: gcr.io/jenkinsxio/jx-cli:latest
+          name: make-pr
+          resources: {}
+
+        - name: large-test-run
+          image: $(params.LARGE_REPORTS_IMAGE)
+          workingDir: /usr/src/app
+          imagePullPolicy: Always
+          script: |
+            export GIT_SHA=$(cat /workspace/source/.git_sha)
+            cat /workspace/source/.env_to_test | while read ENV || [[ -n $line ]];
+            do
+              echo Performing test run for ${ENV}
+              mkdir -p /large-test-reports/${ENV}_${GIT_SHA}
+              export BASE_URL=$(eval "echo" "$"{BASE_URL_${ENV}})
+              echo ${BASE_URL}
+              if npm run test ; then
+                echo success >> /large-test-reports/${ENV}_${GIT_SHA}/.success
+              else
+                echo failed >> /large-test-reports/${ENV}_${GIT_SHA}/.failed
+              fi
+              ls -la reports/html-reports/
+              cp -aR reports/html-reports/. /large-test-reports/${ENV}_${GIT_SHA}
+              ls -la /large-test-reports/${ENV}_${GIT_SHA}
+            done
+          env:
+          - name: HUB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: large-test-config
+                key: selenium.hub.url0
+          - name: HUB_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: large-test-config
+                key: selenium.hub.port
+          - name: BASE_URL_staging
+            value: 'http://mood-feed-frontend-jx-staging.35.195.151.253.nip.io'
+          - name: BASE_URL_production
+            value: 'http://mood-feed-frontend-jx-production.35.195.151.253.nip.io'
+
+        - name: store-large-test-result
+          image: python:latest
+          workingDir: /workspace/source
+          script: |
+            export GIT_SHA=$(git rev-parse master)
+            export REPORT_FOLDER=/large-test-reports
+            pip install pyyaml
+
+            cat /workspace/source/.env_to_test | while read ENV || [[ -n $line ]];
+            do
+              export ENV=${ENV}
+              if [ -f  /large-test-reports/${ENV}_${GIT_SHA}/.failed ]; then
+                export TEST_STATUS=failed
+              else
+                export TEST_STATUS=success
+              fi
+              python -m script.large_test_utils
+              python -c 'from script.large_test_utils import store_versions; store_versions()'
+            done
+            ls -la /large-test-reports
+            cat /large-test-reports/.test-results.yaml
+          env:
+          - name: LARGE_REPORTS_IMAGE
+            value: $(params.LARGE_REPORTS_IMAGE)
+          - name: REPO_URL
+            value: $(params.REPO_URL)
+          - name: REPORTS_URL
+            valueFrom:
+              configMapKeyRef:
+                name: large-test-config
+                key: nginx.url0
+
+        - name: large-test-publish-comment
+          image: gcr.io/jenkinsxio/jx-cli:latest
+          script: |
+            export GIT_SHA=$(git rev-parse master)
+            cat .env_to_test | while read ENV || [[ -n $line ]];
+            do
+              if [ -f  /large-test-reports/${ENV}_${GIT_SHA}/.failed ]; then
+                echo ":x: [Tests for ${ENV} failed :hot_face: ! Here is **large tests** report]($REPORTS_URL/${ENV}_${GIT_SHA}/)"
+              else
+                echo ":tada: [Tests for ${ENV} passed! Here is **large tests** report]($REPORTS_URL/${ENV}_${GIT_SHA}/)"
+              fi
+            done
+            cat .env_to_test | while read ENV || [[ -n $line ]];
+            do
+              if [ -f  /large-test-reports/${ENV}_${GIT_SHA}/.failed ]; then
+                exit 1;
+              fi
+            done
+          env:
+          - name: REPORTS_URL
+            valueFrom:
+              configMapKeyRef:
+                name: large-test-config
+                key: nginx.url0
+
+        volumes:
+        - emptyDir: {}
+          name: workspace-volume
+        - downwardAPI:
+            items:
+            - fieldRef:
+                fieldPath: metadata.labels
+              path: labels
+          name: podinfo
+  podTemplate: {}
+  serviceAccountName: tekton-bot
+  timeout: 240h0m0s
+status: {}

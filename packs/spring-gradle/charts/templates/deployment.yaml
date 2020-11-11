@@ -40,7 +40,12 @@ spec:
         envFrom:
 {{ toYaml .Values.envFrom | indent 10 }}
         ports:
-        - containerPort: {{ .Values.service.internalPort }}
+        - name: http
+          containerPort: {{ .Values.service.internalPort }}
+        {{ if .Values.actuator.enabled }}
+        - name: {{ .Values.actuator.name | quote}}
+          containerPort: {{ .Values.actuator.port }}
+        {{ end }}
         livenessProbe:
           httpGet:
             path: {{ .Values.livenessProbe.path }}
