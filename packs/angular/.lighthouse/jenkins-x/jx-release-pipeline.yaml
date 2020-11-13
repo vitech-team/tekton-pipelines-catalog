@@ -133,32 +133,11 @@ spec:
         - name: source
           workspace: shared-data
 
-    - name: sonar-check
-      taskRef:
-        name: sonarqube-scanner
-      runAfter:
-        - "container-build"
-      params:
-        - name: SONAR_PROJECT_KEY
-          value: "$(params.REPO_OWNER):$(params.REPO_NAME)"
-        - name: SONAR_PROJECT_NAME
-          value: "$(params.REPO_NAME)"
-        - name: SONAR_SECRET
-          value: "sonar"
-        - name: REPO_OWNER
-          value: "$(params.REPO_OWNER)"
-        - name: REPO_NAME
-          value: "$(params.REPO_NAME)"
-      workspaces:
-        - name: source
-          workspace: shared-data
-
     - name: jx-finish-release
       taskRef:
         name: jx-finish-release
       runAfter:
         - "container-build"
-        - "sonar-check"
       params:
         - name: BUILD_ID
           value: $(params.BUILD_ID)
