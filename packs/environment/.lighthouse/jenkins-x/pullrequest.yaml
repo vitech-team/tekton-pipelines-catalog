@@ -3,118 +3,32 @@ kind: PipelineRun
 metadata:
   annotations:
     lighthouse.jenkins-x.io/prependStepsURL: https://raw.githubusercontent.com/jenkins-x/jx3-pipeline-catalog/005e78cf69b643862344397a635736a51dd1bd89/tasks/git-clone/git-clone-pr.yaml
-  creationTimestamp: null
   name: pullrequest
 spec:
   pipelineSpec:
     tasks:
-    - name: from-build-pack
-      resources: {}
-      taskSpec:
-        metadata: {}
-        stepTemplate:
-          env:
-          - name: PIPELINE_KIND
-            value: pullrequest
-          - name: JX_BATCH_MODE
-            value: "true"
-          name: ""
-          volumeMounts:
-          - mountPath: /home/jenkins
-            name: workspace-volume
-          - mountPath: /etc/podinfo
-            name: podinfo
-            readOnly: true
-          - mountPath: /large-test-reports
-            name: large-test-reports
-          workingDir: /workspace/source
-        steps:
-        - name: get-pr-info
-          image: 'gcr.io/jenkinsxio/jx-cli:latest'
-          workingDir: /workspace/source
-          script: |
-            #!/usr/bin/env bash
-            if [[ -n "${PULL_NUMBER}" ]]; then
-              jx gitops pr get --git-token="$GIT_TOKEN" --pr="${PULL_NUMBER}" &> pr.yaml
-            fi
-          env:
-            - name: GIT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: jx-pipeline-git-github-github
-                  key: password
-        - name: save-promotion-label
-          workingDir: /workspace/source
-          image: python:latest
-          script: |
-            pip install pyyaml
-            python -m script.large_test_utils
-            python -c 'from script.large_test_utils import update_promotion_label; update_promotion_label()'
+      - name: from-build-pack
+        taskSpec:
+          stepTemplate:
+            env:
+              - name: PIPELINE_KIND
+                value: pullrequest
+              - name: JX_BATCH_MODE
+                value: "true"
+            name: ""
+            resources:
+              requests:
+                cpu: 400m
+                memory: 512Mi
+            workingDir: /workspace/source
 
-        - name: check-promotion
-          workingDir: /workspace/source
-          image: python:latest
-          script: |
-            #!/usr/bin/env bash
-            echo "Promotion to prod verification..."
-
-            cat .promotion_label
-            if grep -w "production" .promotion_label; then
-              echo "Large test check before promote PR for:"
-              export PR_LAST=$(cat /workspace/source/.pr-last)
-              export GIT_SHA=$(git rev-parse master)
-              export REPORT_FOLDER=/large-test-reports
-              export ENV=production
-              pip install pyyaml
-              python -m script.large_test_utils
-              python -c 'from script.large_test_utils import print_comment; print_comment()' > .test_comment
-              python -c 'from script.large_test_utils import check_versions; check_versions()' > .test_status
-              if [[ $(cat .test_status) == "True" ]]; then
-                echo "Large test check passed"
-              else
-                echo "Large test not passed. Promotion stopped!"
-              fi
-            else
-              echo "Skipped because PR not making promotion to prod"
-            fi
-
-        - name: handle-propmotion-status
-          workingDir: /workspace/source
-          image: 'gcr.io/jenkinsxio/jx-cli:latest'
-          script: |
-            if grep -w "production" .promotion_label; then
-              if grep -w "True" .test_status; then
-                jx gitops pr comment --comment="[Large tests for specified versions passed.]"
-                jx gitops pr comment --comment="$(cat .test_comment)"
-              else
-                jx gitops pr comment --comment=":x: [Large tests for specified versions not passed :hot_face: !]"
-                jx gitops pr comment --comment="$(cat .test_comment)"
-                Exit 1;
-              fi
-            fi
-
-        - name: make-pr
-          args:
-          - pr
-          command:
-          - make
-          image: gcr.io/jenkinsxio/jx-cli:latest
-
-          resources: {}
-
-        volumes:
-        - emptyDir: {}
-          name: workspace-volume
-        - downwardAPI:
-            items:
-            - fieldRef:
-                fieldPath: metadata.labels
-              path: labels
-          name: podinfo
-        - name: large-test-reports
-          persistentVolumeClaim:
-            claimName: large-test
-  podTemplate: {}
+          steps:
+            - name: make-pr
+              args:
+                - pr
+              command:
+                - make
+              image: gcr.io/jenkinsxio/jx-cli:3.0.705
+  podTemplate: { }
   serviceAccountName: tekton-bot
-  timeout: 240h0m0s
-
+  timeout: 2h

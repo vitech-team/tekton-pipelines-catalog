@@ -1,0 +1,124 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: large-tests-execute
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: large-tests
+spec:
+  description: >-
+    Large test execution
+    store reports in PVC
+    send notification to slack
+  params:
+    - name: LARGE_REPORTS_IMAGE
+      default: "gcr.io/sdlc-286111/mood-feed-test:latest"
+      description: image with large reports sources
+      type: string
+    - name: REPORTS_PVC_NAME
+      description: PVC name where reports need to be stored
+    - name: SLACK_SECRET
+      description: slack secret name
+    - name: APP_URL_STAGING
+    - name: APP_URL_PRODUCTION
+    - name: ENVIRONMENTS_TO_TEST
+      description: list of environments hat need to be tested
+  workspaces:
+    - name: source
+      mountPath: /workspace
+      description: where sources is cloned
+  stepTemplate:
+    name: ""
+    volumeMounts:
+      - mountPath: /large-test-reports
+        name: large-test-reports
+    workingDir: /workspace/source
+  results: []
+  steps:
+
+    - name: large-test-run
+      image: $(params.LARGE_REPORTS_IMAGE)
+      workingDir: /usr/src/app
+      imagePullPolicy: Always
+      script: |
+        #!/usr/bin/env bash
+        source /workspace/source/script/large-test.sh
+        executeLargeTests
+      env:
+        - name: HUB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: large-test-config
+              key: selenium.hub.url0
+        - name: HUB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: large-test-config
+              key: selenium.hub.port
+        - name: BASE_URL_staging
+          value: $(params.APP_URL_STAGING)
+        - name: BASE_URL_production
+          value: $(params.APP_URL_PRODUCTION)
+
+    - name: store-large-test-result
+      image: python:latest
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        source /workspace/source/script/large-test.sh
+        storeTestResults
+      env:
+        - name: LARGE_REPORTS_IMAGE
+          value: $(params.LARGE_REPORTS_IMAGE)
+        - name: REPO_URL
+          value: $(params.REPO_URL)
+        - name: REPORTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: large-test-config
+              key: nginx.url0
+
+    - name: large-test-slack-notification
+      image: gcr.io/jenkinsxio/jx-cli:latest
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        source /workspace/source/script/large-test.sh
+        sendMessageToSlack
+      env:
+        - name: REPORTS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: large-test-config
+              key: nginx.url0
+        - name: SLACK_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: $(params.SLACK_SECRET)
+              key: SLACK_TOKEN
+        - name: SLACK_LARGE_TEST_SUCCESS_MSG
+          valueFrom:
+            secretKeyRef:
+              name: $(params.SLACK_SECRET)
+              key: SLACK_LARGE_TEST_SUCCESS_MSG
+        - name: SLACK_LARGE_TEST_FAILED_MSG
+          valueFrom:
+            secretKeyRef:
+              name: $(params.SLACK_SECRET)
+              key: SLACK_LARGE_TEST_FAILED_MSG
+
+    - name: large-test-finish
+      image: gcr.io/jenkinsxio/jx-cli:latest
+      workingDir: /workspace/source
+      script: |
+        cat .env_to_test | while read ENV || [[ -n $line ]];
+        do
+          if [ -f  /large-test-reports/${ENV}_${GIT_SHA}/.failed ]; then
+            exit 1
+          fi
+        done
+
+  volumes:
+    - name: large-test-reports
+      persistentVolumeClaim:
+        claimName: $(params.REPORTS_PVC_NAME)

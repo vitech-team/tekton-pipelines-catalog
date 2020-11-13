@@ -1,0 +1,50 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: large-tests-prepare
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/tags: large-tests
+spec:
+  description: >-
+    TODO
+  params:
+    - name: REPORTS_PVC_NAME
+      default: "large-test"
+  stepTemplate:
+    name: ""
+    volumeMounts:
+      - mountPath: /large-test-reports
+        name: large-test-reports
+    workingDir: /workspace/source
+  results:
+    - name: env_to_test
+      description: list of enviroments what need to be tested with large tests
+  workspaces:
+    - name: source
+      mountPath: /workspace
+      description: sources
+  steps:
+    - name: prepare-promotion-check
+      image: gcr.io/jenkinsxio/builder-jx:2.1.142-761
+      script: |
+        #!/usr/bin/env bash
+        jx get applications -p -u >.deployed_apps
+        git rev-parse master >.git_sha
+        cat .deployed_apps
+
+    - name: check-promotion
+      image: python:latest
+      script: |
+        #!/usr/bin/env bash
+        pip install pyyaml
+        python -m script.large_test_utils
+        python -c 'from script.large_test_utils import check_promotion; check_promotion()'
+        echo "Large test will be executed for next environments: $(cat .env_to_test)"
+        cp .env_to_test > /workspace/source
+        cat .env_to_test > $(results.env_to_test.path)
+
+  volumes:
+    - name: large-test-reports
+      persistentVolumeClaim:
+        claimName: $(params.REPORTS_PVC_NAME)
