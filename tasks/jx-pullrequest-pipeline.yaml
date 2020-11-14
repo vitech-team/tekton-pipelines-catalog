@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: jx-angular-pullrequest
+  name: jx-gradle-pullrequest
 spec:
   description: |
     description
@@ -77,6 +77,7 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
+
       params:
         - name: BUILD_ID
           value: $(params.BUILD_ID)
@@ -107,7 +108,7 @@ spec:
 
     - name: build
       taskRef:
-        name: node-build
+        name: gradle-build
       runAfter:
         - "jx-setup"
       workspaces:
@@ -126,14 +127,16 @@ spec:
         - name: PR_NUMBER
           value: $(params.PULL_NUMBER)
         - name: FAIL
-          value: "false"
+          value: "true"
 
     - name: container-build
       taskRef:
-        name: kaniko
+        name: buildpacks
       runAfter:
-        - "build"
+        - "jx-setup"
       params:
+        - name: BUILDER_IMAGE
+          value: paketobuildpacks/builder:base
         - name: IMAGE
           value: $(tasks.jx-setup.results.image)
       workspaces:
