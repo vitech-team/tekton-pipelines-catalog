@@ -7,28 +7,30 @@ metadata:
 spec:
   pipelineSpec:
     tasks:
-      - name: from-build-pack
-        taskSpec:
-          stepTemplate:
-            env:
-              - name: PIPELINE_KIND
-                value: pullrequest
-              - name: JX_BATCH_MODE
-                value: "true"
-            name: ""
-            resources:
-              requests:
-                cpu: 400m
-                memory: 512Mi
-            workingDir: /workspace/source
-
-          steps:
-            - name: make-pr
-              args:
-                - pr
-              command:
-                - make
-              image: gcr.io/jenkinsxio/jx-cli:3.0.705
-  podTemplate: { }
+    - name: from-build-pack
+      resources: {}
+      taskSpec:
+        metadata: {}
+        stepTemplate:
+          env:
+          - name: PIPELINE_KIND
+            value: pullrequest
+          - name: JX_BATCH_MODE
+            value: "true"
+          name: ""
+          resources:
+            requests:
+              cpu: 400m
+              memory: 512Mi
+          workingDir: /workspace/source
+        steps:
+        - args:
+          - pr
+          command:
+          - make
+          image: gcr.io/jenkinsxio/jx-boot:3.0.738
+          name: make-pr
+          resources: {}
+  podTemplate: {}
   serviceAccountName: tekton-bot
   timeout: 2h
