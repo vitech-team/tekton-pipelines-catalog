@@ -112,7 +112,7 @@ spec:
   podTemplate:
     imagePullSecrets:
       - name: "docker-registry-auth"
-  serviceAccountName: tekton-build-bot
+  serviceAccountName: tekton-bot
   timeout: 30m
   workspaces:
     - name: source
