@@ -8,6 +8,6 @@ spec:
       optional: true
       trigger: (?m)^/test( all| ltc),?(s+|$)
       rerun_command: /test ltc
-      source: "large-tests-check-pipelinerun.yaml"
+      source: "large-tests-check-pipeline.yaml"
   postsubmits:
 
