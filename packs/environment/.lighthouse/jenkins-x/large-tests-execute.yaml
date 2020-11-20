@@ -19,6 +19,9 @@ spec:
       description: PVC name where reports need to be stored
     - name: SLACK_SECRET
       description: slack secret name
+    - name: SLACK_MESSAGES
+      default: "slack-messages"
+      description: slack messages config map name
     - name: APP_URL_STAGING
     - name: APP_URL_PRODUCTION
     - name: ENVIRONMENTS_TO_TEST
@@ -98,13 +101,13 @@ spec:
               key: SLACK_TOKEN
         - name: SLACK_LARGE_TEST_SUCCESS_MSG
           valueFrom:
-            secretKeyRef:
-              name: $(params.SLACK_SECRET)
+            configMapKeyRef:
+              name: $(params.SLACK_MESSAGES)
               key: SLACK_LARGE_TEST_SUCCESS_MSG
         - name: SLACK_LARGE_TEST_FAILED_MSG
           valueFrom:
-            secretKeyRef:
-              name: $(params.SLACK_SECRET)
+            configMapKeyRef:
+              name: $(params.SLACK_MESSAGES)
               key: SLACK_LARGE_TEST_FAILED_MSG
 
     - name: large-test-finish
