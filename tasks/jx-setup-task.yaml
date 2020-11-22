@@ -168,7 +168,12 @@ spec:
       script: |
         #!/usr/bin/env bash
         if $(params.IS_RELEASE); then
-            jx step next-version $(params.NEXT_VERSION_ARGS)
+            if jx step next-version $(params.NEXT_VERSION_ARGS); then
+              echo "New version: $(cat VERSION)"
+            else
+              echo "Original next-version command faled using simple one."
+              jx step next-version --use-git-tag-only
+            fi
           else
             echo "Skipping version update [file]"
         fi
