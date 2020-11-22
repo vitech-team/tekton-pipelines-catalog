@@ -16,5 +16,5 @@ spec:
             value: "large-test"
           - name: PULL_NUMBER
             value: "$(params.PULL_NUMBER)"
-  serviceAccountName: tekton-bot
+  serviceAccountName: tekton-build-bot
   timeout: 10m
