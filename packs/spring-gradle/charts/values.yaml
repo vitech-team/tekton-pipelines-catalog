@@ -12,7 +12,18 @@ jx:
   imagePullSecrets: []
 
 # define environment variables here as a map of key: value
-env: {}
+envValueFrom:
+  - name: MYSQL_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: mysql
+        key: mysql-root-password
+
+env:
+  SPRING_PROFILES_ACTIVE: production
+  MYSQL_USER: root
+
+envFrom: []
 
 # enable this flag to use knative serve to deploy the app
 knativeDeploy: false
@@ -62,7 +73,6 @@ resources:
 probePath: /
 
 livenessProbe:
-  path: actuator/health/liveness
   initialDelaySeconds: 60
   periodSeconds: 10
   successThreshold: 1
@@ -70,7 +80,6 @@ livenessProbe:
   # Optional distinct liveness probe path, if empty the probePath is used
   probePath: ""
 readinessProbe:
-  path: actuator/health/readiness
   failureThreshold: 1
   periodSeconds: 10
   successThreshold: 1
