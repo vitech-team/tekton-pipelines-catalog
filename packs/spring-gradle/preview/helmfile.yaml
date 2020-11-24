@@ -2,6 +2,11 @@ environments:
   default:
     values:
     - jx-values.yaml
+repositories:
+  - name: stable
+    url: https://charts.helm.sh/stable
+  - name: dev
+    url: '{{ .Values | get "jxRequirements.cluster.chartRepository" " " }}'
 releases:
 - chart: stable/mysql
   name: mysql
