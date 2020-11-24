@@ -3,6 +3,12 @@ environments:
     values:
     - jx-values.yaml
 releases:
+- chart: stable/mysql
+  name: mysql
+  version: 1.6.6
+  namespace: '{{ requiredEnv "PREVIEW_NAMESPACE" }}'
+  values:
+    - mysql-values.yaml
 - chart: '../charts/{{ requiredEnv "APP_NAME" }}'
   name: preview
   wait: true
