@@ -38,6 +38,7 @@ spec:
     - name: build-and-push
       workingDir: $(workspaces.source.path)
       image: $(params.BUILDER_IMAGE)
+      imagePullPolicy: IfNotPresent
       # specifying DOCKER_CONFIG is required to allow kaniko to detect docker credential
       # https://github.com/tektoncd/pipeline/pull/706
       env:
@@ -67,6 +68,7 @@ spec:
         runAsUser: 0
     - name: digest-to-results
       workingDir: $(workspaces.source.path)
+      imagePullPolicy: IfNotPresent
       image: stedolan/jq
       script: |
         cat $(params.CONTEXT)/image-digested | jq '.[0].value' -rj | tee /tekton/results/IMAGE-DIGEST
