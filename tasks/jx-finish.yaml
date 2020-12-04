@@ -93,7 +93,7 @@ spec:
         value: $(params.REPO_URL)
   steps:
     - name: promote-jx-preview
-      image: gcr.io/jenkinsxio/jx-cli:latest
+      image: gcr.io/jenkinsxio/jx-preview:0.0.122
       workingDir: $(workspaces.source.path)
       script: |
         #!/bin/bash
