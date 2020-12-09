@@ -1,0 +1,6 @@
+mysqlPassword: 123QWEasd
+mysqlDatabase: DUMMY
+mysqlUser: DUMMY
+mysqlRootPassword: 123QWEasd
+initializationFiles:
+  mood_feed_db.sql: "CREATE DATABASE IF NOT EXISTS DUMMY DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;"
