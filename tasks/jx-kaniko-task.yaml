@@ -9,11 +9,11 @@ metadata:
     tekton.dev/tags: image-build
 spec:
   description: >-
-    This Task builds source into a container image using Google's kaniko tool.
-    Kaniko doesn't depend on a Docker daemon and executes each
-    command within a Dockerfile completely in userspace. This enables
-    building container images in environments that can't easily or
-    securely run a Docker daemon, such as a standard Kubernetes cluster.
+    This Task builds source into a container image using Google's kaniko tool. Kaniko
+    doesn't depend on a Docker daemon and executes each command within a Dockerfile
+    completely in userspace. This enables building container images in environments
+    that can't easily or securely run a Docker daemon, such as a standard Kubernetes
+    cluster.
   params:
     - name: IMAGE
       description: Name (reference) of the image to build.
@@ -33,7 +33,6 @@ spec:
   results:
     - name: IMAGE-DIGEST
       description: Digest of the image just built.
-
   steps:
     - name: build-and-push
       workingDir: $(workspaces.source.path)
@@ -48,7 +47,7 @@ spec:
         - /kaniko/executor
         - $(params.EXTRA_ARGS)
         - --dockerfile=$(params.DOCKERFILE)
-        - --context=$(workspaces.source.path)/$(params.CONTEXT)  # The user does not need to care the workspace and the source.
+        - --context=$(workspaces.source.path)/$(params.CONTEXT) # The user does not need to care the workspace and the source.
         - --destination=$(params.IMAGE)
         - --oci-layout-path=$(workspaces.source.path)/$(params.CONTEXT)/image-digest
       # kaniko assumes it is running as root, which means this example fails on platforms
@@ -60,7 +59,7 @@ spec:
       workingDir: $(workspaces.source.path)
       image: gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/imagedigestexporter:v0.16.2
       # output of imagedigestexport [{"key":"digest","value":"sha256:eed29..660","resourceRef":{"name":"myrepo/myimage"}}]
-      command: ["/ko-app/imagedigestexporter"]
+      command: [ "/ko-app/imagedigestexporter" ]
       args:
         - -images=[{"name":"$(params.IMAGE)","type":"image","url":"$(params.IMAGE)","digest":"","OutputImageDir":"$(workspaces.source.path)/$(params.CONTEXT)/image-digest"}]
         - -terminationMessagePath=$(params.CONTEXT)/image-digested
@@ -70,5 +69,5 @@ spec:
       workingDir: $(workspaces.source.path)
       imagePullPolicy: IfNotPresent
       image: stedolan/jq
-      script: |
+      script: |-
         cat $(params.CONTEXT)/image-digested | jq '.[0].value' -rj | tee /tekton/results/IMAGE-DIGEST

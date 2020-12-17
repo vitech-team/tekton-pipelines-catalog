@@ -49,20 +49,17 @@ spec:
     - name: COPY_FOLDER
       description: paketo cleaning directory after build, so we need copy sources and run build there
       default: "source_copy"
-
   workspaces:
     - name: source
-
   stepTemplate:
     env:
       - name: CNB_PLATFORM_API
         value: "0.3"
-
   steps:
     - name: prepare
-      image: gcr.io/jenkinsxio/jx-cli:latest
+      image: gcr.io/jenkinsxio/jx-cli:3.1.43
       imagePullPolicy: Always
-      command: ["/bin/sh"]
+      command: [ "/bin/sh" ]
       args:
         - "-c"
         - |-
@@ -80,11 +77,10 @@ spec:
           mountPath: /$(params.COPY_FOLDER)
       securityContext:
         privileged: true
-
     - name: create
       image: $(params.BUILDER_IMAGE)
       imagePullPolicy: Always
-      command: ["/cnb/lifecycle/creator"]
+      command: [ "/cnb/lifecycle/creator" ]
       args:
         - "-app=/$(params.COPY_FOLDER)"
         - "-cache-dir=/cache"
@@ -107,11 +103,10 @@ spec:
           mountPath: /platform
         - name: source-copy
           mountPath: /$(params.COPY_FOLDER)
-
   volumes:
     - name: empty-dir
-      emptyDir: {}
+      emptyDir: { }
     - name: source-copy
-      emptyDir: {}
+      emptyDir: { }
     - name: layers-dir
-      emptyDir: {}
+      emptyDir: { }

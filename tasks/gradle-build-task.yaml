@@ -40,4 +40,3 @@ spec:
       env:
         - name: _JAVA_OPTIONS
           value: $(params.JAVA_OPTIONS)
-

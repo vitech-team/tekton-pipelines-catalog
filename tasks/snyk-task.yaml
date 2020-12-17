@@ -19,12 +19,10 @@ spec:
       type: string
       description: Pull Request ID
       default: ""
-
     - name: DOCKER_SOCKET_VOLUME
       type: string
       description: "Name of docker-socket volume to mount: /var/run/docker.sock"
       default: "docker-socket"
-
     - name: SNYK_IMAGE
       type: string
       description: "Snyk image like: snyk/snyk:docker"
@@ -66,7 +64,6 @@ spec:
     volumeMounts:
       - name: $(params.DOCKER_SOCKET_VOLUME)
         mountPath: /var/run/docker.sock
-
   results:
     - name: monitor-url
       description: The precise URL that was fetched by this Task
@@ -84,7 +81,6 @@ spec:
         snyk $(params.SNYK_COMMAND) monitor ${1} $(params.IMAGE) | grep -Eo '(http|https).+' > $(results.monitor-url.path)
 
         cat $(results.monitor-url.path)
-
     - name: snyk-test
       image: "$(params.SNYK_IMAGE)"
       workingDir: $(workspaces.source.path)
@@ -97,9 +93,8 @@ spec:
         else
           echo "failed" > $(results.status.path)
         fi
-
     - name: snyk-comment
-      image: gcr.io/jenkinsxio/jx-cli:latest
+      image: gcr.io/jenkinsxio/jx-cli:3.1.43
       workingDir: $(workspaces.source.path)
       script: |
         #!/usr/bin/env bash

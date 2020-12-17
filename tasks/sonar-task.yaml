@@ -24,7 +24,6 @@ spec:
     - name: SONAR_HOST_URL
       description: Host URL where the sonarqube server is running
       default: "https://sonarcloud.io"
-
     - name: SONAR_PROJECT_KEY
       description: Project's unique key
       default: ""
@@ -37,7 +36,6 @@ spec:
     - name: SONAR_SCM
       description: Project's unique key
       default: "github"
-
     - name: SONAR_PR_BRANCH
       description: Project's unique key
       default: ""
@@ -47,10 +45,8 @@ spec:
     - name: SONAR_PR_KEY
       description: Project's unique key
       default: ""
-
     - name: SONAR_SECRET
       description: Name of sonar secret
-
     - name: REPO_OWNER
       description: repository owner
       default: ""
@@ -123,7 +119,7 @@ spec:
           fi
 
           if [[ -n "$(params.SONAR_PR_BRANCH)" ]]; then
-            replaceValues $(workspaces.source.path)/sonar-project.properties sonar.pullrequest.branch $(params.SONAR_PR_BRANCH)
+            replaceValues $(workspaces.source.path)/sonar-project.properties sonar.pullrequest.branch "$(params.SONAR_PR_BRANCH)"
             replaceValues $(workspaces.source.path)/sonar-project.properties sonar.pullrequest.base $(params.SONAR_PR_BASE)
             replaceValues $(workspaces.source.path)/sonar-project.properties sonar.pullrequest.key $(params.SONAR_PR_KEY)
           fi
@@ -136,7 +132,6 @@ spec:
         fi
         echo "---------------------------"
         cat $(workspaces.source.path)/sonar-project.properties
-
     - name: sonar-scan
       image: sonarsource/sonar-scanner-cli
       workingDir: $(workspaces.source.path)
@@ -151,9 +146,8 @@ spec:
             secretKeyRef:
               name: $(params.SONAR_SECRET)
               key: sonar-login
-
     - name: verify-sonar-status
-      image: gcr.io/jenkinsxio/jx-cli:latest
+      image: gcr.io/jenkinsxio/jx-cli:3.1.43
       workingDir: $(workspaces.source.path)
       script: |
         #!/usr/bin/env bash

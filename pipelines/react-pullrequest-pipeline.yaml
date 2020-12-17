@@ -50,13 +50,11 @@ spec:
     - description: git url to clone
       name: REPO_URL
       type: string
-
   workspaces:
     - name: shared-data
       description: |
         This workspace will receive the cloned git repo and be passed
         to the next Task for the repo's README.md file to be read.
-
   tasks:
     - name: fetch-repo
       taskRef:
@@ -64,11 +62,9 @@ spec:
       workspaces:
         - name: output
           workspace: shared-data
-
       params:
         - name: url
           value: $(params.REPO_URL)
-
     - name: jx-setup
       taskRef:
         name: jx-setup
@@ -104,7 +100,6 @@ spec:
           value: $(params.REPO_OWNER)
         - name: REPO_URL
           value: $(params.REPO_URL)
-
     - name: build
       taskRef:
         name: node-build
@@ -113,7 +108,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-
     - name: conventionalcommits
       taskRef:
         name: conventional-commits
@@ -127,7 +121,6 @@ spec:
           value: $(params.PULL_NUMBER)
         - name: FAIL
           value: "false"
-
     - name: container-build
       taskRef:
         name: kaniko
@@ -139,63 +132,61 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-
-#    - name: snyk-container-check
-#      taskRef:
-#        name: snyk
-#      runAfter:
-#        - "container-build"
-#      params:
-#        - name: SNYK_IMAGE
-#          value: "snyk/snyk:docker"
-#        - name: SNYK_COMMAND
-#          value: "container"
-#        - name: IMAGE
-#          value: $(tasks.jx-setup.results.image)
-#        - name: MONITOR_ARGS
-#          value:
-#            - "--project-name=$(params.REPO_OWNER)/$(params.REPO_NAME)/$(tasks.jx-setup.results.source_branch)"
-#        - name: TEST_ARGS
-#          value:
-#            - "--severity-threshold=high"
-#        - name: SNYK_SECRET
-#          value: snyk
-#        - name: PR_ID
-#          value: "$(params.PULL_NUMBER)"
-#        - name: FAIL
-#          value: "false"
-#
-#      workspaces:
-#        - name: source
-#          workspace: shared-data
-#
-#    - name: snyk-dependency-check
-#      taskRef:
-#        name: snyk
-#      runAfter:
-#        - "build"
-#      params:
-#        - name: SNYK_IMAGE
-#          value: "snyk/snyk:gradle-jdk11"
-#        - name: SNYK_COMMAND
-#          value: ""
-#        - name: MONITOR_ARGS
-#          value:
-#            - "--remote-repo-url=$(params.REPO_URL)"
-#            - "--project-name=$(params.REPO_OWNER)/$(params.REPO_NAME)/$(tasks.jx-setup.results.source_branch)"
-#        - name: TEST_ARGS
-#          value:
-#            - "--severity-threshold=high"
-#        - name: SNYK_SECRET
-#          value: snyk
-#        - name: PR_ID
-#          value: "$(params.PULL_NUMBER)"
-#        - name: FAIL
-#          value: "false"
-#      workspaces:
-#        - name: source
-#          workspace: shared-data
-
+          #    - name: snyk-container-check
+          #      taskRef:
+          #        name: snyk
+          #      runAfter:
+          #        - "container-build"
+          #      params:
+          #        - name: SNYK_IMAGE
+          #          value: "snyk/snyk:docker"
+          #        - name: SNYK_COMMAND
+          #          value: "container"
+          #        - name: IMAGE
+          #          value: $(tasks.jx-setup.results.image)
+          #        - name: MONITOR_ARGS
+          #          value:
+          #            - "--project-name=$(params.REPO_OWNER)/$(params.REPO_NAME)/$(tasks.jx-setup.results.source_branch)"
+          #        - name: TEST_ARGS
+          #          value:
+          #            - "--severity-threshold=high"
+          #        - name: SNYK_SECRET
+          #          value: snyk
+          #        - name: PR_ID
+          #          value: "$(params.PULL_NUMBER)"
+          #        - name: FAIL
+          #          value: "false"
+          #
+          #      workspaces:
+          #        - name: source
+          #          workspace: shared-data
+          #
+          #    - name: snyk-dependency-check
+          #      taskRef:
+          #        name: snyk
+          #      runAfter:
+          #        - "build"
+          #      params:
+          #        - name: SNYK_IMAGE
+          #          value: "snyk/snyk:gradle-jdk11"
+          #        - name: SNYK_COMMAND
+          #          value: ""
+          #        - name: MONITOR_ARGS
+          #          value:
+          #            - "--remote-repo-url=$(params.REPO_URL)"
+          #            - "--project-name=$(params.REPO_OWNER)/$(params.REPO_NAME)/$(tasks.jx-setup.results.source_branch)"
+          #        - name: TEST_ARGS
+          #          value:
+          #            - "--severity-threshold=high"
+          #        - name: SNYK_SECRET
+          #          value: snyk
+          #        - name: PR_ID
+          #          value: "$(params.PULL_NUMBER)"
+          #        - name: FAIL
+          #          value: "false"
+          #      workspaces:
+          #        - name: source
+          #          workspace: shared-data
     - name: jx-finish
       taskRef:
         name: jx-finish-pr

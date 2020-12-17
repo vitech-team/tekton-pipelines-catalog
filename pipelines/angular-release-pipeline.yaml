@@ -50,18 +50,15 @@ spec:
     - description: git url to clone
       name: REPO_URL
       type: string
-
     - name: NEXT_VERSION_ARGS
       type: string
       description: release args
       default: "--semantic-release --filename package.json"
-
   workspaces:
     - name: shared-data
       description: |
         This workspace will receive the cloned git repo and be passed
         to the next Task for the repo's README.md file to be read.
-
   tasks:
     - name: fetch-repo
       taskRef:
@@ -69,11 +66,9 @@ spec:
       workspaces:
         - name: output
           workspace: shared-data
-
       params:
         - name: url
           value: $(params.REPO_URL)
-
     - name: jx-setup
       taskRef:
         name: jx-setup
@@ -111,7 +106,6 @@ spec:
           value: "true"
         - name: NEXT_VERSION_ARGS
           value: $(params.NEXT_VERSION_ARGS)
-
     - name: build
       taskRef:
         name: node-build
@@ -120,7 +114,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-
     - name: container-build
       taskRef:
         name: kaniko
@@ -132,7 +125,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-
     - name: sonar-check
       taskRef:
         name: sonarqube-scanner
@@ -152,7 +144,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-
     - name: jx-finish-release
       taskRef:
         name: jx-finish-release

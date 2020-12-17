@@ -9,9 +9,9 @@ metadata:
     tekton.dev/tags: messaging
 spec:
   description: >-
-    These tasks post a simple message to a slack channel.
-    This task uses chat.postMessage slack REST api to send the message.
-    There are multiple ways to send a message to slack.
+    These tasks post a simple message to a slack channel. This task uses chat.postMessage
+    slack REST api to send the message. There are multiple ways to send a message
+    to slack.
   params:
     - name: token-secret
       type: string

@@ -91,9 +91,23 @@ spec:
         value: $(params.REPO_URL)
   steps:
     - name: promote-jx-preview
-      image: gcr.io/jenkinsxio/jx-cli:latest
+      image: gcr.io/jenkinsxio/jx-preview:0.0.136
       workingDir: $(workspaces.source.path)
       script: |
-        #!/bin/bash
+        #!/usr/bin/env sh
         source /workspace/source/.jx/variables.sh
-        jx preview create
+        if jx preview create ; then
+          echo "true" > prev.created
+        else
+          echo "false" > prev.created
+        fi
+
+    - name: check-if-preview-created
+      image: gcr.io/jenkinsxio/jx-preview:0.0.136
+      workingDir: $(workspaces.source.path)
+      script: |
+        if ! "$(cat prev.created)"; then
+          echo "preview env has not been created"
+          echo "see logs above"
+          exit 1
+        fi

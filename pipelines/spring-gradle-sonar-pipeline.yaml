@@ -50,13 +50,11 @@ spec:
     - description: git url to clone
       name: REPO_URL
       type: string
-
   workspaces:
     - name: shared-data
       description: |
         This workspace will receive the cloned git repo and be passed
         to the next Task for the repo's README.md file to be read.
-
   tasks:
     - name: fetch-repo
       taskRef:
@@ -67,7 +65,6 @@ spec:
       params:
         - name: url
           value: $(params.REPO_URL)
-
     - name: jx-setup
       taskRef:
         name: jx-setup
@@ -105,7 +102,6 @@ spec:
           value: $(params.REPO_OWNER)
         - name: REPO_URL
           value: $(params.REPO_URL)
-
     - name: build
       taskRef:
         name: gradle-build
@@ -114,7 +110,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-
     - name: sonar-check
       taskRef:
         name: sonarqube-scanner
