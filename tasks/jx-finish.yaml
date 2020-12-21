@@ -58,9 +58,6 @@ spec:
     - description: git repository owner (user or organisation)
       name: REPO_OWNER
       type: string
-    - name: SLACK_SECRET
-      default: slack
-      description: slack secret name
   stepTemplate:
     env:
       - name: BUILD_ID

@@ -50,6 +50,10 @@ spec:
     - description: git url to clone
       name: REPO_URL
       type: string
+    - name: DOCKLE_EXIT_LEVEL
+      default: "info"
+    - name: TRIVY_SEVERITY
+      default: "MEDIUM"
   workspaces:
     - name: shared-data
       description: |
@@ -134,6 +138,25 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
+
+    - name: container-check
+      taskRef:
+        name: container-scan
+      runAfter:
+        - "container-build"
+      params:
+        - name: PR_NUMBER
+          value: "$(params.PULL_NUMBER)"
+        - name: PR_NUMBER
+          value: "$(tasks.jx-setup.results.image)"
+        - name: DOCKLE_EXIT_LEVEL
+          value: "$(params.DOCKLE_EXIT_LEVEL)"
+        - name: TRIVY_SEVERITY
+          value: "$(params.TRIVY_SEVERITY)"
+      workspaces:
+        - name: source
+          workspace: shared-data
+
     - name: jx-finish
       taskRef:
         name: jx-finish-pr
