@@ -50,6 +50,10 @@ spec:
     - description: git url to clone
       name: REPO_URL
       type: string
+    - name: DOCKLE_EXIT_LEVEL
+      default: "warn"
+    - name: TRIVY_SEVERITY
+      default: "HIGH"
   workspaces:
     - name: shared-data
       description: |
