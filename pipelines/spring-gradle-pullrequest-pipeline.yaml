@@ -147,7 +147,7 @@ spec:
       params:
         - name: PR_NUMBER
           value: "$(params.PULL_NUMBER)"
-        - name: PR_NUMBER
+        - name: image-url
           value: "$(tasks.jx-setup.results.image)"
         - name: DOCKLE_EXIT_LEVEL
           value: "$(params.DOCKLE_EXIT_LEVEL)"

@@ -21,6 +21,9 @@ spec:
       default: "gradle:6.3.0-jdk11"
     - name: JAVA_OPTIONS
       default: "-Xms10m -Xmx192m"
+    - name: GRADLE_PVC
+      description: "gradle home pvc name"
+      default: "gradle-home"
     - name: ARGS
       description: gradle exctra args
       type: array
@@ -28,6 +31,10 @@ spec:
         - clean
         - build
         - --no-daemon
+  volumes:
+    - name: gradle-home-cache
+      persistentVolumeClaim:
+        claimName: "$(params.GRADLE_PVC)"
   steps:
     - name: build
       image: $(params.IMAGE)
@@ -37,6 +44,11 @@ spec:
         - gradle
       args:
         - "$(params.ARGS[*])"
+        - "-Dgradle.user.home=/.gradle"
       env:
         - name: _JAVA_OPTIONS
-          value: $(params.JAVA_OPTIONS)
+          value: "$(params.JAVA_OPTIONS)"
+      volumeMounts:
+        - name: gradle-home-cache
+          mountPath: /.gradle
+
