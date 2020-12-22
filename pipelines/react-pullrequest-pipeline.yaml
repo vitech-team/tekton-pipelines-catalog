@@ -124,7 +124,7 @@ spec:
         - name: PR_NUMBER
           value: $(params.PULL_NUMBER)
         - name: FAIL
-          value: "false"
+          value: "true"
     - name: container-build
       taskRef:
         name: kaniko
