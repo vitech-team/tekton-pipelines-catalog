@@ -15,7 +15,7 @@ spec:
       description: Flag indicating that a scan should be performed
       default: "true"
     - name: TRIVY_IMAGE
-      default: quay.io/ibmgaragecloud/aquasec-trivy:0.14.0
+      default: aquasec/trivy:0.15.0
     - name: TRIVY_CACHE_PVC
       default: trivy-cache
     - name: TRIVY_SEVERITY
@@ -37,11 +37,10 @@ spec:
     volumeMounts:
       - name: $(params.DOCKER_SOCKET_VOLUME)
         mountPath: /var/run/docker.sock
-      - name: $(params.TRIVY_CACHE_PVC)
-        mountPath: /tmp/trivy/
   volumes:
     - name: $(params.TRIVY_CACHE_PVC)
-      emptyDir: {}
+      persistentVolumeClaim:
+        claimName: trivy
   results:
     - name: dockle-result
       description: dockle execution result
@@ -58,13 +57,16 @@ spec:
           exit 0
         fi
 
-        if trivy image  --no-progress --exit-code 1 --severity "$(params.TRIVY_SEVERITY)" -f json -o ".trivy-report.json" "$(params.image-url)" ; then
+        if trivy --cache-dir="/.trivycache/" image   --no-progress --exit-code 1 --severity "$(params.TRIVY_SEVERITY)" -f json -o ".trivy-report.json" "$(params.image-url)" ; then
           echo "0" > $(results.trivy-result.path)
         else
           echo "1" > $(results.trivy-result.path)
         fi
 
         echo "Continue..."
+      volumeMounts:
+        - name: $(params.TRIVY_CACHE_PVC)
+          mountPath: /.trivycache/
 
     - name: dockle-scan
       image: $(params.DOCKLE_IMAGE)
