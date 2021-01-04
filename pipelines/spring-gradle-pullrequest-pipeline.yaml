@@ -132,7 +132,7 @@ spec:
         - "jx-setup"
       params:
         - name: BUILDER_IMAGE
-          value: paketobuildpacks/builder:base
+          value: paketobuildpacks/builder:0.1.37-base
         - name: IMAGE
           value: $(tasks.jx-setup.results.image)
       workspaces:

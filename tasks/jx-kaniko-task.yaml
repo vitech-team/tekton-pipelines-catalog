@@ -46,10 +46,15 @@ spec:
       command:
         - /kaniko/executor
         - $(params.EXTRA_ARGS)
+        - --cache
+        - --cache-dir=/image-cache
         - --dockerfile=$(params.DOCKERFILE)
         - --context=$(workspaces.source.path)/$(params.CONTEXT) # The user does not need to care the workspace and the source.
         - --destination=$(params.IMAGE)
         - --oci-layout-path=$(workspaces.source.path)/$(params.CONTEXT)/image-digest
+      volumeMounts:
+        - name: cache
+          mountPath: /image-cache
       # kaniko assumes it is running as root, which means this example fails on platforms
       # that default to run containers as random uid (like OpenShift). Adding this securityContext
       # makes it explicit that it needs to run as root.
@@ -71,3 +76,7 @@ spec:
       image: stedolan/jq
       script: |-
         cat $(params.CONTEXT)/image-digested | jq '.[0].value' -rj | tee /tekton/results/IMAGE-DIGEST
+  volumes:
+    - name: cache
+      persistentVolumeClaim:
+        claimName: kaniko-cache

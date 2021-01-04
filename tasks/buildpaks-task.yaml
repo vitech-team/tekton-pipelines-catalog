@@ -22,13 +22,13 @@ spec:
       description: The image on which builds will run (must include lifecycle and compatible buildpacks).
     - name: CACHE
       description: The name of the persistent app cache volume.
-      default: empty-dir
+      default: cache-dir
     - name: CACHE_IMAGE
       description: The name of the persistent app cache image.
       default: ""
     - name: PLATFORM_DIR
       description: The name of the platform directory.
-      default: empty-dir
+      default: cache-dir
     - name: USER_ID
       description: The user ID of the builder image user.
       default: "1000"
@@ -58,7 +58,6 @@ spec:
   steps:
     - name: prepare
       image: gcr.io/jenkinsxio/jx-cli:3.1.43
-      imagePullPolicy: Always
       command: [ "/bin/sh" ]
       args:
         - "-c"
@@ -79,7 +78,6 @@ spec:
         privileged: true
     - name: create
       image: $(params.BUILDER_IMAGE)
-      imagePullPolicy: Always
       command: [ "/cnb/lifecycle/creator" ]
       args:
         - "-app=/$(params.COPY_FOLDER)"
@@ -94,6 +92,16 @@ spec:
         - "-run-image=$(params.RUN_IMAGE)"
         - "-uid=$(params.USER_ID)"
         - "$(params.IMAGE)"
+      env:
+        - name: ARTIFACT_REGISTRY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: nexus
+              key: password
+        - name: ARTIFACT_REGISTRY_USER
+          value: "admin"
+        - name: ARTIFACT_REGISTRY_URL
+          value: "http://nexus/repository/maven-group/"
       volumeMounts:
         - name: layers-dir
           mountPath: /layers
@@ -103,9 +111,13 @@ spec:
           mountPath: /platform
         - name: source-copy
           mountPath: /$(params.COPY_FOLDER)
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
   volumes:
-    - name: empty-dir
-      emptyDir: { }
+    - name: cache-dir
+      persistentVolumeClaim:
+        claimName: buildpacks-cache
     - name: source-copy
       emptyDir: { }
     - name: layers-dir
