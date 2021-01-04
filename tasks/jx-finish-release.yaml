@@ -61,6 +61,9 @@ spec:
     - name: SLACK_SECRET
       default: slack
       description: slack secret name
+    - name: SLACK_CHANEL
+      default: "#none"
+      description: slack chanel to notify about release
   stepTemplate:
     env:
       - name: BUILD_ID
@@ -151,7 +154,7 @@ spec:
               name: $(params.SLACK_SECRET)
               key: SLACK_TOKEN
         - name: SLACK_CHANEL
-          value: "#none"
+          value: "$(params.SLACK_CHANEL)"
         - name: SLACK_MESSAGE_TMPL
           value: |
             {
