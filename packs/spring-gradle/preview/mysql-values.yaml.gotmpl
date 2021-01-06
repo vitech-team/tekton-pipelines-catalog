@@ -1,0 +1,8 @@
+metrics:
+  enabled: false
+
+auth:
+  rootPassword: 123QWEasd
+  username: {{ requiredEnv "APP_NAME" }}
+  password: 123TestQwe
+  database: {{ requiredEnv "APP_NAME" }}
