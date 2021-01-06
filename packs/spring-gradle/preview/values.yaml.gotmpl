@@ -3,4 +3,5 @@ image:
   tag: "{{ requiredEnv "VERSION" }}"
 
 env:
-  "SPRING_PROFILES_ACTIVE": "production"
+  "SPRING_PROFILES_ACTIVE": "preview"
+  "APP_NAME": "{{ requiredEnv "APP_NAME" }}"
