@@ -14,7 +14,7 @@ releases:
 #  namespace: '{{ requiredEnv "PREVIEW_NAMESPACE" }}'
 #  values:
 #    - backend-values.yaml
-#    - imagePullSecrets.yaml
+#    - jx-values.yaml
 #- chart: bitnami/mysql
 #  version: 8.2.1
 #  name: mysql
@@ -22,7 +22,6 @@ releases:
 #  wait: true
 #  values:
 #    - mysql-values.yaml.gotmpl
-#    - imagePullSecrets.yaml
 #    - jx-values.yaml
 - chart: '../charts/{{ requiredEnv "APP_NAME" }}'
   name: preview
@@ -32,7 +31,6 @@ releases:
   values:
   - values.yaml.gotmpl
   - jx-values.yaml
-  - imagePullSecrets.yaml
   hooks:
   - events: ["presync"]
     showlogs: true
