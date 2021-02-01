@@ -102,6 +102,14 @@ spec:
           value: $(params.REPO_OWNER)
         - name: REPO_URL
           value: $(params.REPO_URL)
+    - name: build
+      taskRef:
+        name: python-build
+      runAfter:
+        - "jx-setup"
+      workspaces:
+        - name: source
+          workspace: shared-data
     - name: sonar-check
       taskRef:
         name: sonarqube-scanner
